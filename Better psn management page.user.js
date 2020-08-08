@@ -48,11 +48,12 @@
             var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
             if(btn != undefined)
             {
-                if(btn.innerText == "Save")
+                var div = document.getElementsByClassName("theme-realname ember-view")[0]
+                if(div != undefined) // real name menu is open
                 {
                     if(!window.buttonAdded){
+                         //Inject new button
                         window.buttonAdded = true;
-                        // Add 2nd button
 
                         var mainDiv = btn.parentElement.parentElement
 
@@ -141,6 +142,7 @@
             }
             return this.openOg(method,url,async);
         }
+//        alert('Better Management Page script by SilicaAndPina loaded! and on the correct domain.');
     }
     else
     {
