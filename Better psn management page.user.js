@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better psn management page
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Allows for defualt avatar and setitng realname to anything!!
 // @author       SilicaAndPina
 // @match        https://id.sonyentertainmentnetwork.com/*
@@ -42,14 +42,65 @@
 
             btn.click();
         }
+
+        window.updateAboutMe = function(txt)
+        {
+            var aboutMe = document.getElementsByClassName("textarea fixed-width ")[0]
+
+            window.overrideAboutMe = aboutMe.value;
+
+            aboutMe.value = txt;
+
+            var inputEvent = document.createEvent('Event');
+            inputEvent.initEvent('input', true, true);
+            aboutMe.dispatchEvent(inputEvent)
+
+        }
+        window.waitForSave = function()
+        {
+            var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
+            if(btn.hasAttribute("disabled"))
+            {
+                window.setTimeout(window.waitForSave,0);
+            }
+            else
+            {
+                btn.click();
+            }
+        }
+
+        window.aboutMeClick = function()
+        {
+            var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
+
+            window.overrideAboutMeChangeRequest = true;
+
+            window.updateAboutMe("OVERRIDDEN");
+
+            window.waitForSave();
+        }
+        window.updateAboutMeLabel = function()
+        {
+            var lbl = document.getElementsByClassName("pdr-list-column main-text bold-text")[2];
+            if(lbl != undefined)
+            {
+                lbl.innerText = window.originalAbout;
+            }
+            else
+            {
+                window.setTimeout(window.updateAboutMeLabel,0);
+            }
+        }
+
         window.buttonAdded = false;
         window.enablePage = function()
         {
             var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
             if(btn != undefined)
             {
-                var div = document.getElementsByClassName("theme-realname ember-view")[0]
-                if(div != undefined) // real name menu is open
+                var aboutMeDiv = document.querySelector("*[data-components='pdr-about-me']");
+                var realNameDiv = document.getElementsByClassName("theme-realname ember-view")[0]
+                if(realNameDiv != undefined || aboutMeDiv != null) // applicible menu is open
                 {
                     if(!window.buttonAdded){
                          //Inject new button
@@ -68,12 +119,17 @@
                         newButton.innerHTML = '<span dir="ltr" class="caption">Force Save</span>'
                         newButton.setAttribute("tabIndex",3)
                         newButton.setAttribute("class","primary-button row-button text-button")
-                        newButton.setAttribute("onclick",'realNameClick()')
+                        // Determine Action
+                        if(realNameDiv != undefined)
+                        {
+                            newButton.setAttribute("onclick",'realNameClick()')
+                        }
+                        if(aboutMeDiv != null)
+                        {
+                            updateAboutMe(document.getElementsByClassName("pdr-list-column main-text bold-text")[2].innerText);
+                            newButton.setAttribute("onclick",'aboutMeClick()')
+                        }
                     }
-                }
-                else
-                {
-                    window.buttonAdded = false;
                 }
             }
             else
@@ -86,6 +142,67 @@
 
         XMLHttpRequest.prototype.openOg = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, async){
+            if(method == "GET" && (url.includes("regcam/api") && url.includes("users/me/profile")))
+            {
+                this.sendOg = this.send;
+                this.send = function(){
+                    this.onreadystatechangeOg = this.onreadystatechange
+                    this.onreadystatechange = function(){
+                        if (this.readyState === 4) {
+                            var oldResp = this.response;
+                            var oldRespText = this.responseText
+                            window.originalAbout = JSON.parse(oldResp)["aboutMe"];
+                            window.updateAboutMeLabel();
+                            Object.defineProperty(this, 'response',     {writable: true});
+                            Object.defineProperty(this, 'responseText', {writable: true});
+                            this.response = oldResp.replace(/\\u..../g, "");
+                            this.responseText = oldRespText.replace(/\\u..../g, "");
+                            Object.defineProperty(this, 'response',     {writable: false});
+                            Object.defineProperty(this, 'responseText', {writable: false});
+                        }
+                        return this.onreadystatechangeOg();
+                    }
+                    return this.sendOg();
+                }
+
+
+            }
+            if(method == "POST" && url.includes("users/me/profile"))
+            {
+                if(window.overrideAboutMeChangeRequest)
+                {
+                    this.sendOg = this.send;
+                    this.send = function(body){
+                        var profileData = JSON.parse(body);
+                        profileData["aboutMe"] = window.overrideAboutMe;
+                        var newBody = JSON.stringify(profileData);
+                        console.log(body + ' -> ' + newBody);
+
+
+                        this.onreadystatechangeOg = this.onreadystatechange
+                        this.onreadystatechange = function(){
+                            if (this.readyState === 4) {
+                                if(this.status == 500) // 500 OK xD
+                                {
+                                    Object.defineProperty(this, 'status',     {writable: true});
+                                    Object.defineProperty(this, 'statusText', {writable: true});
+                                    this.status = 200;
+                                    this.statusText = "OK";
+                                    Object.defineProperty(this, 'status',     {writable: false});
+                                    Object.defineProperty(this, 'statusText', {writable: false});
+                                }
+                            }
+                            return this.onreadystatechangeOg();
+                        }
+                        window.overrideAboutMeChangeRequest = false;
+
+                        try{
+                            return this.sendOg(newBody);
+                        }catch(Exception){}
+                    }
+                }
+
+            }
             if(method == "PUT" && url.includes("accounts/me/communication"))
             {
                 if(window.overrideNameChangeRequest)
