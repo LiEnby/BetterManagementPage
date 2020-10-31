@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better psn management page
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  Allows for defualt avatar and setitng realname to anything!!
 // @author       SilicaAndPina
 // @match        https://id.sonyentertainmentnetwork.com/*
@@ -11,6 +11,32 @@
     'use strict';
     if(window.location.host == "id.sonyentertainmentnetwork.com")
     {
+        if(window.location.toString().includes("/signin"))
+        {
+            var url = window.location.toString();
+            if(!url.includes("user%3Aaccount.profile.get%20user%3Aaccount.profile.update"))
+            {
+                var get = url.split('&')
+                for(var i = 0; i < get.length; i++)
+                {
+                    if(get[i].startsWith('scope'))
+                    {
+                        get[i] += "%20user%3Aaccount.profile.get%20user%3Aaccount.profile.update";
+                    }
+                }
+
+                window.location = get.join('&');
+            }
+
+            return;
+        }
+        function htmlToElement(html) {
+            var template = document.createElement('template');
+            html = html.trim(); // Never return a text node of whitespace as the result
+            template.innerHTML = html;
+            return template.content.firstChild;
+        }
+
         window.realNameClick = function()
         {
             var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
@@ -24,9 +50,9 @@
             window.overrideMiddleName = middleName.value;
             window.overrideLastName = lastName.value;
 
-            firstName.value = "OVERRIDDEN";
-            middleName.value = "OVERRIDDEN";
-            lastName.value = "OVERRIDDEN";
+            firstName.value = "OFirst";
+            middleName.value = "OMiddle";
+            lastName.value = "OLast";
 
             var keyEvent = document.createEvent('KeyboardEvent');
             keyEvent.initEvent('keyup',true,true);
@@ -79,6 +105,33 @@
 
             window.waitForSave();
         }
+        window.updateRealNameLabel = function()
+        {
+            var lbl = document.getElementsByClassName("pdr-list-column main-text bold-text")[1];
+            if(lbl != undefined)
+            {
+                if(lbl.innerText.includes("OLast"))
+                {
+                    lbl.innerText = lbl.innerText.replace("OFirst",window.overrideFirstName);
+                    lbl.innerText = lbl.innerText.replace("OMiddle",window.overrideMiddleName);
+                    lbl.innerText = lbl.innerText.replace("OLast",window.overrideLastName);
+
+                    lbl = document.getElementsByClassName("profile-text-title max-two-lines")[0];
+
+                    lbl.innerText = lbl.innerText.replace("OFirst",window.overrideFirstName);
+                    lbl.innerText = lbl.innerText.replace("OMiddle",window.overrideMiddleName);
+                    lbl.innerText = lbl.innerText.replace("OLast",window.overrideLastName);
+                }
+                else
+                {
+                    window.setTimeout(window.updateRealNameLabel,0);
+                }
+            }
+            else
+            {
+                window.setTimeout(window.updateRealNameLabel,0);
+            }
+        }
         window.updateAboutMeLabel = function()
         {
             var lbl = document.getElementsByClassName("pdr-list-column main-text bold-text")[2];
@@ -91,10 +144,45 @@
                 window.setTimeout(window.updateAboutMeLabel,0);
             }
         }
+        window.cancelColorChange = function()
+        {
+            document.getElementById("colorChangeWindow").remove()
+        }
+        window.setColor = function()
+        {
+            window.selectedColor = document.getElementById("colorSelector").value.substring(1);
+            var xhr = new XMLHttpRequest();
+            xhr.open("PATCH","https://profile.api.playstation.com/v1/users/me/profile/backgroundImage",true);
+            xhr.setRequestHeaderOg("Content-Type","application/json; charset=UTF-8-Type");
+            xhr.setRequestHeaderOg("Authorization",window.loginToken);
+            xhr.onreadystatechange = function()
+            {
+                if (this.readyState === 4) {
+                    document.getElementById("mainPageColor").innerText = "#"+window.selectedColor;
+                    document.getElementById("mainPageColor").style.color = document.getElementById("mainPageColor").innerText
+                    window.cancelColorChange();
+                }
+            }
+            xhr.send("{\"ops\":[{\"op\":\"replace\",\"path\":\"/color\",\"value\":\""+window.selectedColor+"\"}]}");
+
+        }
+        window.newColorSelected = function()
+        {
+            document.getElementById("colorHex").innerText = document.getElementById("colorSelector").value;
+        }
+        window.editColor = function()
+        {
+            var popupBox = htmlToElement('<div id="colorChangeWindow" data-components="pdr-popup" id="girlsdyingcute" class="ember-view"><div data-components="pdr-popup-frame" id="girlsdyingcutely" class="modal rows scroller theme-dimmer ember-view"> <div class="separator-pagetop dialog row-unshrink"></div><div class="row-flex"></div><div class="columns row-unshrink"> <div class="separator-frame beside column-unshrink"></div><div class="column-flex"></div><div class="popup-frame fixed-height rows theme-basebackground"> <div data-components="pdr-popup-header" id="girlsdyingiscute" class="separator-horizontal-hairline bottom ember-view"><div class="popup-header"> <div class="popup-header-text" dir="ltr">Profile Color</div><button onclick="window.cancelColorChange()" tabindex="0" title="Close" class="popup-header-icon close icon-header-close-black" dir="ltr" data-ember-action="" data-ember-action-220="220"></button></div></div><div data-components="kekka-scroller" id="girlsdyingiscute" class="outline-top scroller custom-scrollbar row-flex rows scroller-visible ember-view"><main tabindex="-1" data-components="pdr-main-content" id="girlsdyingiscute" class="rows flex-content theme-basebackground ember-view"> <div class="theme-noticeback row-unshrink"> <div data-components="pdr-notice" id="girlsdyingiscute" style="display: none;" class="row-notice item-notice ember-view"><div class="wrap-notice "> <div class="cell-notice top"> <div class="notice-icon-base " title=""></div></div><div class="cell-notice middle"> <div class="separator-notice text-notice text-margin " dir="ltr"></div></div></div></div></div><div class="separator-pagetop middle row-unshrink"></div><div class="columns row-flex"> <div class="popup-content-wrapper rows"> <div class="label description-regular" dir="ltr">You can change the color of your PSN Profile Page to anything you want.</div><div class="separator-pageitems row-unshrink"></div><div data-components="pdr-color-change" id="girlsdyingiscute" class="ember-view"><div class="grid-parent description-input-title"> <div class="grid-child description-input-title" dir="ltr">Update your profile color: </div><div> <input id="colorSelector" onchange="window.newColorSelected()" type="color"> <span id="colorHex">#000000</span></div></div></div><div class="separator-pageitems small"></div><div class="separator-pageitems"></div><div class="columns-center"> <div data-components="pdr-button" id="girlsdyingiscute" class="column-flex button ember-view"><button onclick="window.cancelColorChange()" tabindex="0" class="secondary-button row-button text-button" type="button"><span dir="ltr" class="caption">Cancel</span></button></div><div class="separator-pageitems beside narrow"></div><div data-components="pdr-button" id="girlsdyingiscute" class="column-flex button ember-view"><button onclick="window.setColor()" tabindex="0" class="primary-button row-button text-button"><span dir="ltr" class="caption">Set Color</span></button></div></div></div></div><div class="separator-pagefooter middle row-unshrink"></div></main></div></div><div class="column-flex"></div><div class="separator-frame beside column-unshrink"></div></div><div class="row-flex"></div><div class="separator-pagefooter dialog row-unshrink"></div></div></div>');
+            document.getElementById("modalarea").appendChild(popupBox);
+            document.getElementById("colorSelector").value = "#"+window.selectedColor;
+            document.getElementById("colorHex").innerText = "#"+window.selectedColor;
+        }
 
         window.buttonAdded = false;
+        window.colorAdded = false;
         window.enablePage = function()
         {
+            window.setTimeout(window.enablePage,0);
             var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
             if(btn != undefined)
             {
@@ -136,10 +224,35 @@
             {
                 window.buttonAdded = false
             }
-            window.setTimeout(window.enablePage,0);
-        }
-        window.setTimeout(window.enablePage,0);
 
+            var onProfilePage = document.getElementsByClassName("list-cam-menu list-item-row selectable-cam-menu highlight")[0].innerText.includes("Profile");
+            if(onProfilePage && window.colorAdded == false)
+            {
+                var elms = document.getElementsByClassName("pdr-list-item ember-view");
+                if(elms.length == 0)
+                    return;
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET","https://profile.api.playstation.com/v1/users/me/profile?fields=backgroundImage",true);
+                xhr.setRequestHeaderOg("Content-Type","application/json; charset=UTF-8-Type");
+                xhr.setRequestHeaderOg("Authorization",window.loginToken);
+                xhr.onreadystatechange = function()
+                {
+                    if (this.readyState === 4) {
+                        window.selectedColor = JSON.parse(this.responseText)["backgroundImage"]["color"];
+                        var elm = document.getElementsByClassName("row-unshrink")[11].children[0]
+                        var newElement = htmlToElement('<li data-components="pdr-li" id="girlsdyingcute" class="ember-view"><div data-components="pdr-li-row" id="girlsdyingcutely" class="pdr-list-item ember-view"> <div class="pdr-list-column flex-width fixed-width has-hint"> <div class="pdr-list-item"> <div class="pdr-list-column flex-width "> <div class="pdr-list-item inner-list-item " style=""> <div class="pdr-list-column flex-width column-unshrink "> <div class="pdr-list-item"> <div class="pdr-list-column main-text fitting-width "> <div id="girlsdyingiscute" data-components="pdr-label" class="label ember-view"><div> <div class="grid-parent "> <div class="grid-child "> <span dir="ltr" class="label-title" id="profile_color">Profile Color</span> </div></div></div></div></div></div></div></div></div></div></div><div class="pdr-list-column flex-width "> <div class="pdr-list-item"> <div class="pdr-list-column flex-width "> <div class="pdr-list-item inner-list-item " style=""> <div class="pdr-list-column flex-width column-unshrink "> <div class="pdr-list-item"> <div class="pdr-list-column main-text bold-text" dir="ltr" id="mainPageColor">#'+window.selectedColor.toString()+'</div></div></div></div></div><div class="pdr-list-column column-unshrink button-column "> <div data-components="pdr-button" id="girlsdyingiscute" class="list-cam-narrow-button expand-taparea button ember-view"><button tabindex="0" class="secondary-button row-button text-button disabled-loading-caption" type="button" onclick="window.editColor()"><span dir="ltr" class="caption">Edit</span></button></div></div></div></div></div></li>');
+                        elm.appendChild(newElement);
+                        document.getElementById("mainPageColor").style.color = document.getElementById("mainPageColor").innerText
+                    }
+                }
+                xhr.send();
+                window.colorAdded = true;
+            }
+            else if(!onProfilePage)
+            {
+                window.colorAdded = false;
+            }
+        }
         XMLHttpRequest.prototype.openOg = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url, async){
             if(method == "GET" && (url.includes("regcam/api") && url.includes("users/me/profile")))
@@ -203,7 +316,7 @@
                 }
 
             }
-            if(method == "PUT" && url.includes("accounts/me/communication"))
+            if(method == "PUT" && url.includes("/realName"))
             {
                 if(window.overrideNameChangeRequest)
                 {
@@ -211,12 +324,13 @@
                     this.send = function(body){
                         var realNameData = JSON.parse(body);
 
-                        realNameData["realName"]["name"]["first"] = window.overrideFirstName;
-                        realNameData["realName"]["name"]["middle"] = window.overrideMiddleName;
-                        realNameData["realName"]["name"]["last"] = window.overrideLastName
+                        realNameData["first"] = window.overrideFirstName;
+                        realNameData["middle"] = window.overrideMiddleName;
+                        realNameData["last"] = window.overrideLastName
 
                         var newBody = JSON.stringify(realNameData);
                         console.log(body + ' -> ' + newBody);
+                        window.updateRealNameLabel();
                         return this.sendOg(newBody);
                     }
                     window.overrideNameChangeRequest = false;
@@ -258,6 +372,19 @@
                 }
             }
             return this.openOg(method,url,async);
+        }
+
+        XMLHttpRequest.prototype.setRequestHeaderOg = XMLHttpRequest.prototype.setRequestHeader;
+        XMLHttpRequest.prototype.setRequestHeader = function(header, value){
+            if(header == "Authorization")
+            {
+                if(window.loginToken == undefined)
+                    window.setTimeout(window.enablePage,0);
+
+                window.loginToken = value; // i can make my own requests now :3
+                console.log("Found token: "+value);
+            }
+            return this.setRequestHeaderOg(header,value);
         }
 //        alert('Better Management Page script by SilicaAndPina loaded! and on the correct domain.');
     }
