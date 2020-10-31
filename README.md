@@ -8,3 +8,10 @@ FireFox: https://addons.mozilla.org/en-GB/firefox/addon/tampermonkey/
 
 If you dont have access to userscripts, you can still copy the javascript directly into your browsers console, or into the url bar prefixed by 
 'javascript:' a minified version for this purpose can be found here: https://raw.githubusercontent.com/KuromeSan/BetterManagementPage/master/BetterManagementPage-mini.js
+
+
+Features:
+  - "Force Save" real name - ignore all clientside validation and send the name you typed to the server
+  - "Force Save" about me - ignore clientside validation and send the about me you typed to the server (allows for emojis!)
+  - "Profile Color" ability to change your profile color from the web rather than on ps4 or mobile.
+  - "Default Avatar" adds the default avatar to the list of avalible avatars
