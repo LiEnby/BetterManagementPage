@@ -225,7 +225,7 @@
                 window.buttonAdded = false
             }
 
-            var onProfilePage = window.location.toString().includes("psn_profile");
+            var onProfilePage = window.location.toString().includes("/psn_profile");
             if(onProfilePage && window.colorAdded == false)
             {
                 var elms = document.getElementsByClassName("pdr-list-item ember-view");
