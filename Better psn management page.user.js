@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better psn management page
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  Allows for defualt avatar and setitng realname to anything!!
 // @author       SilicaAndPina
 // @match        https://id.sonyentertainmentnetwork.com/*
@@ -182,7 +182,7 @@
         window.colorAdded = false;
         window.enablePage = function()
         {
-            window.setTimeout(window.enablePage,0);
+            window.setTimeout(window.enablePage,5);
             var btn = document.getElementsByClassName("primary-button row-button text-button")[0]
             if(btn != undefined)
             {
@@ -225,7 +225,7 @@
                 window.buttonAdded = false
             }
 
-            var onProfilePage = document.getElementsByClassName("list-cam-menu list-item-row selectable-cam-menu highlight")[0].innerText.includes("Profile");
+            var onProfilePage = window.location.toString().includes("psn_profile");
             if(onProfilePage && window.colorAdded == false)
             {
                 var elms = document.getElementsByClassName("pdr-list-item ember-view");
