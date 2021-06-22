@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better psn management page
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  Allows for defualt avatar and setitng realname to anything!!
 // @author       SilicaAndPina
 // @match        https://id.sonyentertainmentnetwork.com/*
