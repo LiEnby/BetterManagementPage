@@ -153,7 +153,7 @@
             window.selectedColor = document.getElementById("colorSelector").value.substring(1);
             var xhr = new XMLHttpRequest();
             xhr.open("PATCH","https://profile.api.playstation.com/v1/users/me/profile/backgroundImage",true);
-            xhr.setRequestHeaderOg("Content-Type","application/json; charset=UTF-8-Type");
+            xhr.setRequestHeaderOg("Content-Type","application/json");
             xhr.setRequestHeaderOg("Authorization",window.loginToken);
             xhr.onreadystatechange = function()
             {
